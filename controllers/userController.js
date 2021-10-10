@@ -1,8 +1,8 @@
 const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const User = require("../models/userModel");
-const sendEmail = require("../utils/sendEmail");
 const sendToken = require("../utils/jwtTokens");
+const sendEmail = require("../utils/sendEmail");
 const crypto = require("crypto");
 
 
@@ -44,7 +44,7 @@ exports.loginUser = catchAsyncErrors(async(req,res,next)=>{
 		return next(new ErrorHandler("Please Enter Email and Password",400));
 	}
 
-	const user = await User.findOne({email:email}).select("+password");
+	const user = await User.findOne({email}).select("+password");
 
 	if(!user){
 		return next(new ErrorHandler("Invalid email or password",401));
@@ -97,7 +97,7 @@ exports.forgotPassword = catchAsyncErrors(async(req,res,next)=>{
 		return next(new ErrorHandler("User not found",404));
 	}
 
-	// get reset password toen
+	// get reset password token
 	const resetToken = user.getResetPasswordToken();
 
 	// saving user because added not saved
@@ -168,3 +168,101 @@ exports.resetPassword = catchAsyncErrors(async(req,res,next)=>{
 		sendToken(user,200,res);
 
 });
+
+
+// get user details -> this route is only accessible only when user is logged in 
+
+exports.getUserDetails = catchAsyncErrors(async(req,res,next)=>{
+
+	const user = await User.findById(req.user.id);
+
+	// only accesible whn logged in
+	res.status(200).json({
+		success:true,
+		user,
+	});
+
+
+});
+
+// update/change password route user
+exports.updatePassword = catchAsyncErrors(async(req,res,next)=>{
+
+	const user = await User.findById(req.user.id).select("+password");
+
+const isPasswordMatched = await user.comparePassword(req.body.oldPassword);
+
+if(!isPasswordMatched){
+	return next(new ErrorHandler(" Old password is incorrect", 400));
+}
+
+	if(req.body.newPassword !== req.body.confirmPassword){
+		return next(new ErrorHandler(" password not matched",400))
+	}
+
+	// if inputed correct
+	user.password = req.body.newPassword;
+	await user.save();
+
+	sendToken(user,200,res);
+
+	// only accesible whn logged in
+	// res.status(200).json({
+	// 	success:true,
+	// 	user,
+	// });
+
+
+});
+
+// update profile mehod
+
+exports.updateProfile = catchAsyncErrors(async(req,res,next)=>{
+
+	const newUserData = {
+    	name: req.body.name,
+    	email: req.body.email,
+  	};
+
+
+		// we will add avatar later after using cloudiary
+
+		const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
+		    new: true,
+		    runValidators: true,
+		    useFindAndModify: false,
+		  });
+
+		  res.status(200).json({
+		    success: true,
+		  });
+		});
+
+
+// get all users
+
+exports.getAllUser = catchAsyncErrors(async(req,res,next)=>{
+
+	const users = await User.find();
+
+	res.status(200).json({
+		success:true,
+		users,
+	})
+});
+
+// get all/single users details -> for admin
+
+exports.getSingleUser = catchAsyncErrors(async(req,res,next)=>{
+
+	const user = await User.findById(req.params.id);
+
+	if(!user){
+		return next(new ErrorHandler(`User does not exist with id: ${req.params.id}`));
+	}
+
+	res.status(200).json({
+		success:true,
+		user,
+	})
+})

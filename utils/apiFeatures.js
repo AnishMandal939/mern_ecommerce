@@ -31,14 +31,14 @@ class ApiFeatures {
 		// removing some fields for category
 		const removeFields = ["keyword","page","limit"];
 
-		removeFields.forEach(key=> delete queryCopy[key]);
+		removeFields.forEach((key)=> delete queryCopy[key]);
 		// console.log(queryCopy);
 
 		// price filter -> to be done by range 
 		// console.log(queryCopy);
 
 		let queryStr = JSON.stringify(queryCopy);
-		queryStr = queryStr.replace(/\b(gt|gte|lt|lte)\b/g,key => `$${key}`);
+		queryStr = queryStr.replace(/\b(gt|gte|lt|lte)\b/g,(key) => `$${key}`);
 		// price filter
 
 		// this.query = this.query.find(queryCopy);

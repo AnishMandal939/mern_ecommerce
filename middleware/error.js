@@ -15,10 +15,10 @@ module.exports = (err,req, res,next) =>{
 
 	// mongoose duplicate key error sam email registration 
 
-	if (err.code && err.code === 11000){
+	if (err.code && err.code == 11000){
 		// const message = `Duplicate ${Object.keys(err.keyValue)} Entered`;
 		const message = `Duplicate || Data Already Exist`;
-		err = new ErrorHandler(message, 400);
+		err = new ErrorHandler(message, 409);
 	}
 	// mongoose duplicate key error sam email registration end
 
